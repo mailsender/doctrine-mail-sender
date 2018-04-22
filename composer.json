@@ -1,0 +1,39 @@
+{
+  "name": "mailsender/doctrine-sender",
+  "description": "Library make easy create mail and send it throw several interfaces",
+  "type": "library",
+  "require-dev": {
+    "phpstan/phpstan": "^0.8.5",
+    "phpunit/phpunit": "^6.4",
+    "ramsey/uuid": "^3.7",
+    "olicek/rabbitmq": "dev-master"
+  },
+  "license": "GPL-3.0",
+  "authors": [
+    {
+      "name": "Petr Olišar",
+      "email": "petr.olisar@gmail.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Mailsender\\DoctrineSender\\": [
+        "src/"
+      ]
+    }
+  },
+  "require": {
+    "php": ">= 7.1",
+    "mailsender/core": "@dev",
+    "doctrine/orm": "^2.6",
+    "dunglas/doctrine-json-odm": "0.1.*",
+    "symfony/property-access": "^4.0",
+    "phpmailer/phpmailer": "^6.0"
+  },
+  "suggest": {
+    "ramsey/uuid": "Allows generate uuid.",
+    "olicek/rabbitmq": "Allows use RabbitMQSender.",
+    "symfony/serializer": "Allows serialize and deserialize mail entity.",
+    "phpmailer/phpmailer": "Allows send mail."
+  }
+}
