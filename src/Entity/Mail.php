@@ -84,7 +84,7 @@ class Mail implements IMail
 	 * @var string
 	 * @ORM\Column(type="json_document", nullable=true, options={"jsonb": false})
 	 */
-	private $data;
+	private $data = '{}';
 
 	/**
 	 * @var string
@@ -189,7 +189,7 @@ class Mail implements IMail
 	 */
 	public function setData(string $data): Mail
 	{
-		$this->data = $data;
+		$this->data = json_decode($data);
 
 		return $this;
 	}
@@ -306,7 +306,7 @@ class Mail implements IMail
 	 */
 	public function getData(): string
 	{
-		return $this->data;
+		return json_encode($this->data);
 	}
 
 	/**

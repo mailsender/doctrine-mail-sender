@@ -20,7 +20,8 @@ class MailDemoFacade implements IMailTypeFacade
 	 */
 	public function getContent(IMail $mail): string
 	{
-		return 'Test string';
+		$data = json_decode($mail->getData(), true);
+		return 'Test string' . $data['dearCustomer'];
 	}
 
 }

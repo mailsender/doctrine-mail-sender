@@ -4,9 +4,9 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 \Tracy\Debugger::enable(false, __DIR__ . '/../temp/');
 
-if(is_file(__DIR__ . 'settings.php'))
+if(is_file(__DIR__ . '/settings.php'))
 {
-  require_once __DIR__ . 'settings.php';
+  require_once __DIR__ . '/settings.php';
 }
 else
 {
@@ -24,7 +24,6 @@ else
 		],
 	];
 }
-
 
 try
 {

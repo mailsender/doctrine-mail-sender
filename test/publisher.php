@@ -69,8 +69,8 @@ catch (\Mailsender\Core\Exceptions\CreateMailException $e)
 	echo 'E-mail can not be created.';
 	exit(1);
 }
-$mail->setRecipient(new \Mailsender\Core\Entity\Contact('Petr Olišar', 'petr.olisar@gmail.com'));
-$mail->setData(json_encode(''));
+$mail->setRecipient(new \Mailsender\Core\Entity\Contact('Petr Olisar', 'petr.olisar@gmail.com'));
+$mail->setData(json_encode(['dearCustomer' => 'Drahousek zakaznik',]));
 
 $mailSender = new \Mailsender\DoctrineSender\MailSenders\QueueMailSender($em->getConnection());
 try
@@ -83,4 +83,6 @@ catch (\Mailsender\Core\Exceptions\CreateMailException $e)
 	echo 'E-mail can not be inserted to database.';
 	exit(1);
 }
-var_dump($mail);
+
+echo 'Mail was saved to database';
+exit(0);
