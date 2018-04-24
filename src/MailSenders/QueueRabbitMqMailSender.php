@@ -58,8 +58,8 @@ class QueueRabbitMqMailSender implements IMailSender
     {
 		$data = [
 			$mail->getMailType()->getId(),
-			mb_convert_encoding($mail->getRecipient(), 'UTF-8', 'UTF-8'),
-			mb_convert_encoding($mail->getSender(), 'UTF-8', 'UTF-8'),
+			json_encode($mail->getRecipient()),
+			json_encode($mail->getSender()),
 			$mail->getSubject(),
 			$mail->getCharset(),
 			$mail->getData(),

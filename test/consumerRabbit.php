@@ -22,6 +22,16 @@ else
 			'maxAttemptsCount' => 10,
 			'limit' => 10,
 		],
+		'rabbit' => [
+			'host' => '192.168.33.10',
+			'port' => 5672,
+			'user' => 'sportisimo',
+			'password' => 'sportisimo',
+			'vhost' => '/',
+			'heartbeat' => 20.0,
+			'connectionTimeout' => 3.0,
+			'readWriteTimeout' => 40.0,
+		],
 	];
 }
 
@@ -78,107 +88,59 @@ $mailRepository = new \Mailsender\DoctrineSender\Repository\MailRepository($em);
 $mailTypeRepository = new \Mailsender\DoctrineSender\Repository\MailTypeRepository($em);
 $mailTypeFacadeFactory = new \Mailsender\DoctrineSender\MailTypes\MailTypeFacadeFactory(__DIR__ . '/../temp/');
 $service = new \Mailsender\DoctrineSender\MailDemoService($mailRepository, $mailTypeRepository, $mailTypeFacadeFactory);
-
 $mailSender = new \Mailsender\Core\MailSenders\PHPMailSender(
 	$settings['mailServer']['host'], $settings['mailServer']['port'], $settings['mailServer']['username'],
 	$settings['mailServer']['password'], $settings['mailServer']['secure'], $service
 );
 
 
-$uuid = \Ramsey\Uuid\Uuid::uuid4();
-$maxAttemptsCount = 10;
+$queue = 'newsletters';
+$exchange = 'mails';
 
-$connection = $em->getConnection();
-try
-{
-	$connection->executeUpdate(
-		'UPDATE mail_queue SET job_id =?
-		 WHERE job_id IS NULL AND attempts_count < ?
-		 ORDER BY priority DESC, mail_id ASC
-		 LIMIT ' . $settings['queue']['limit'], [$uuid->toString(), $settings['queue']['maxAttemptsCount']]
-	);
-}
-catch (\Doctrine\DBAL\DBALException $e)
-{
-	\Tracy\Debugger::log($e, \Tracy\ILogger::EXCEPTION);
-	echo 'Error while locking job.';
-	exit(1);
-}
+$connectionProvider = new \Oli\RabbitMq\Connection\ConnectionProvider($settings['rabbit']);
+$rabbitConnection = (new \Oli\RabbitMq\Connection\ConnectionFactory(['default' => $connectionProvider]))->getConnection('default');
 
+$channel = $rabbitConnection->getChannel();
+$channel->exchange_declare($exchange, 'direct');
+$channel->queue_declare($queue, false, true, false, false);
+$channel->queue_bind($queue, $exchange, 'newsletter');
 
-$qb = $connection->createQueryBuilder();
-/** @var \Doctrine\DBAL\Driver\PDOStatement $result */
-$result = $qb->select('mq.mail_id')->from('mail_queue', 'mq')
-	->where('job_id = :jobId')
-	->addOrderBy('priority', 'DESC')
-	->addOrderBy('mail_id', 'ASC')
-	->setParameters(['jobId' => $uuid->toString(),])->execute();
-
-
-$success = [];
-$error = [];
-foreach ($result->fetchAll() as $item)
-{
+$callback = function(\PhpAmqpLib\Message\AMQPMessage $msg) use ($mailRepository, $mailSender, $em) {
 	try
 	{
-		/** @var \Mailsender\DoctrineSender\Entity\Mail $mail */
-		$mail = $service->createById((int) $item['mail_id']);
+		$mail = $mailRepository->fetchMailById((int) $msg->getBody());
 
 		$mailSender->send($mail);
-		$success[] = $mail->getId();
+
+		$em->getConnection()->prepare('UPDATE mails SET `date_sent` = ? WHERE id = ?')->execute([new DateTime(), $mail->getId()]);
+
+		$msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
+
+		unset($mail);
 	}
-	catch (\PHPMailer\PHPMailer\Exception $e)
+	catch(\Throwable $e)
 	{
-		\Tracy\Debugger::log($e, \Tracy\ILogger::EXCEPTION);
-		echo 'Error while sending mail.';
-		$error[] = $item['mail_id'];
+		$msg->delivery_info['channel']->basic_nack($msg->delivery_info['delivery_tag']);
+	}
+};
+
+
+$channel->basic_qos(null, 20, null);
+$channel->basic_consume('newsletters', 'newsletter' . getmypid(), false, false, false, false, $callback);
+
+try
+{
+	while(\count($channel->callbacks) && memory_get_usage() < 15000000)
+	{
+		$channel->wait();
 	}
 }
-
-// ------------------------------------ Process sended e-mails -----------------------------------------------
-
-// Updatne errors
-if(!empty($error))
+catch(\PhpAmqpLib\Exception\AMQPOutOfBoundsException $e)
 {
-	try
-	{
-		$connection->executeUpdate(
-			'UPDATE mail_queue SET `job_id` = ?, `attempts_count` = `attempts_count` + 1 WHERE job_id = ? AND mail_id IN (?)',
-			[
-				null, $uuid->toString(), $error
-			]
-		);
-	}
-	catch (\Doctrine\DBAL\DBALException $e)
-	{
-		\Tracy\Debugger::log($e, \Tracy\ILogger::EXCEPTION);
-		echo 'Error while update mail queue.';
-	}
+	echo $e->getMessage();
 }
-
-// Delete success
-if(!empty($success))
+catch(\PhpAmqpLib\Exception\AMQPRuntimeException $e)
 {
-
-	try
-	{
-		$connection->executeQuery(
-			'DELETE FROM mail_queue WHERE job_id = ? AND mail_id IN (?)', [
-				$uuid->toString(),
-				$success,
-			], [\PDO::PARAM_STR, \Doctrine\DBAL\Connection::PARAM_INT_ARRAY]
-		)->execute();
-
-		$connection->executeUpdate(
-			'UPDATE mails SET `date_sent` = ? WHERE id IN (?)',
-			[new DateTime(), $error],
-			['datetime', \Doctrine\DBAL\Connection::PARAM_INT_ARRAY]
-		);
-	}
-	catch (\Doctrine\DBAL\DBALException $e)
-	{
-		\Tracy\Debugger::log($e, \Tracy\ILogger::EXCEPTION);
-		echo 'Error while update mail queue.';
-	}
+	echo $e->getMessage();
 }
 exit(0);
