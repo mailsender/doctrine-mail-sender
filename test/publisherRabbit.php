@@ -6,10 +6,10 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 $settings = [
 	'rabbit' => [
-		'host' => '192.168.33.10',
+		'host' => '192.168.44.10',
         'port' => 5672,
-        'user' => 'sportisimo',
-        'password' => 'sportisimo',
+        'user' => 'mailsender',
+        'password' => 'mailsender',
 		'vhost' => '/',
 		'heartbeat' => 20.0,
 		'connectionTimeout' => 3.0,

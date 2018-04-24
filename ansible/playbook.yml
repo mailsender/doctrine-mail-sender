@@ -1,0 +1,37 @@
+#- hosts: all
+#  become: yes
+#  become_method: sudo
+#  tasks:
+#    - name: installing repo for Java 8 in Ubuntu
+#      apt_repository: repo='ppa:openjdk-r/ppa'
+
+- hosts: all
+  become: yes
+  become_method: sudo
+  pre_tasks:
+    - apt_repository:
+        repo: 'ppa:ondrej/php'
+        state: present
+
+  roles:
+    - { role: geerlingguy.git }
+    - { role: geerlingguy.nginx }
+    - { role: geerlingguy.php }
+    - { role: geerlingguy.mysql }
+    - geerlingguy.composer
+    - { role: geerlingguy.adminer }
+    - { role: geerlingguy.rabbitmq }
+
+  tasks:
+
+    # nastavovani RabbitMQ
+    - name: Zapnuti pluginu rabbitmq_management
+      shell: rabbitmq-plugins enable rabbitmq_management
+
+#   TODO: When provision is run more then one time, this must be commented out
+    - name: Pridani uzivatele mailsender/mailsender
+      shell: rabbitmqctl add_user mailsender mailsender
+    - name: Pridani tagu administrator pro uzivatele mailsender
+      shell: sudo rabbitmqctl set_user_tags mailsender administrator
+    - name: Pridani opravneni pro uzivatele mailsender
+      shell: rabbitmqctl set_permissions -p / mailsender ".*" ".*" ".*"

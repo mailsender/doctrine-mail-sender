@@ -10,7 +10,7 @@ use Mailsender\Core\MailSenders\IMailSender;
 /**
  * Class QueueMailSender
  * Copyright (c) 2018 Petr Olisar
- * @package Sportisimo\Ecommerce\MailSender\MailSenders
+ * @package Mailsender\DoctrineSender\MailSenders
  */
 class QueueMailSender implements IMailSender
 {

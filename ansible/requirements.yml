@@ -1,0 +1,7 @@
+- src: geerlingguy.git
+- src: geerlingguy.nginx
+- src: geerlingguy.php
+- src: geerlingguy.mysql
+- src: geerlingguy.composer
+- src: geerlingguy.adminer
+- src: geerlingguy.rabbitmq

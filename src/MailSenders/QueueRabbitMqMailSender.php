@@ -13,7 +13,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 /**
  * Class QueueRabbitMqMailSender
  * Copyright (c) 2018 Petr Olisar
- * @package Sportisimo\Ecommerce\Console\Model\RabbitMQ
+ * @package Mailsender\DoctrineSender\MailSenders
  */
 class QueueRabbitMqMailSender implements IMailSender
 {
@@ -71,7 +71,7 @@ class QueueRabbitMqMailSender implements IMailSender
 	  $connection = $this->connectionRabbitMQFactory->getConnection('default');
 	  if($this->channel === null)
 	  {
-      	$this->channel = $connection->getChannel();
+	  	$this->channel = $connection->getChannel();
 	  }
       $this->channel->exchange_declare($exchange, 'direct');
       $this->channel->queue_declare($queue, false, true, false, false);

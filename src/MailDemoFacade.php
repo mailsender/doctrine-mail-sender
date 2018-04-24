@@ -7,7 +7,7 @@ use Mailsender\DoctrineSender\MailTypes\IMailTypeFacade;
 
 /**
  * Class MailDemoFacade
- * Copyright (c) 2017 Sportisimo s.r.o.
+ * Copyright (c) 2018 Petr Olisar
  * @package Mailsender\DoctrineMailSet
  */
 class MailDemoFacade implements IMailTypeFacade

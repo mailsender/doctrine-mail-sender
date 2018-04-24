@@ -23,10 +23,10 @@ else
 			'limit' => 10,
 		],
 		'rabbit' => [
-			'host' => '192.168.33.10',
+			'host' => '192.168.44.10',
 			'port' => 5672,
-			'user' => 'sportisimo',
-			'password' => 'sportisimo',
+			'user' => 'mailsender',
+			'password' => 'mailsender',
 			'vhost' => '/',
 			'heartbeat' => 20.0,
 			'connectionTimeout' => 3.0,
@@ -95,15 +95,12 @@ $mailSender = new \Mailsender\Core\MailSenders\PHPMailSender(
 
 
 $queue = 'newsletters';
-$exchange = 'mails';
 
 $connectionProvider = new \Oli\RabbitMq\Connection\ConnectionProvider($settings['rabbit']);
 $rabbitConnection = (new \Oli\RabbitMq\Connection\ConnectionFactory(['default' => $connectionProvider]))->getConnection('default');
 
 $channel = $rabbitConnection->getChannel();
-$channel->exchange_declare($exchange, 'direct');
 $channel->queue_declare($queue, false, true, false, false);
-$channel->queue_bind($queue, $exchange, 'newsletter');
 
 $callback = function(\PhpAmqpLib\Message\AMQPMessage $msg) use ($mailRepository, $mailSender, $em) {
 	try
